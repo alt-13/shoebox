@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Shoebox: a tiny self-hosted shoe catalog (category kids/adult, EU size, photo, note), built for fast phone entry and deployed as one Docker container on Unraid. LAN-only, no auth by design. See README.md for deployment details.
 
+## Git
+
+Commit directly to `main`; no feature branches or PRs.
+
 ## Commands
 
 There are no tests, linter or build step.
