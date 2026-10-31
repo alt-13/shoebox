@@ -53,12 +53,16 @@ with db() as con:
             comment     TEXT NOT NULL DEFAULT '',
             photo_path  TEXT NOT NULL DEFAULT '',
             color       TEXT NOT NULL DEFAULT '',
+            boxed       INTEGER NOT NULL DEFAULT 0,
             created_at  TEXT NOT NULL,
             updated_at  TEXT NOT NULL
         )"""
     )
-    if "color" not in {r["name"] for r in con.execute("PRAGMA table_info(shoes)")}:
+    cols = {r["name"] for r in con.execute("PRAGMA table_info(shoes)")}
+    if "color" not in cols:
         con.execute("ALTER TABLE shoes ADD COLUMN color TEXT NOT NULL DEFAULT ''")
+    if "boxed" not in cols:
+        con.execute("ALTER TABLE shoes ADD COLUMN boxed INTEGER NOT NULL DEFAULT 0")
     # name the color of shoes added before color detection existed
     for r in con.execute("SELECT id FROM shoes WHERE color = ''").fetchall():
         try:
@@ -143,6 +147,7 @@ def to_dict(r: sqlite3.Row) -> dict:
         "size": r["size"],
         "comment": r["comment"],
         "color": r["color"],
+        "boxed": bool(r["boxed"]),
         "created_at": r["created_at"],
         "updated_at": r["updated_at"],
         "photo_url": "/photos/" + quote(r["photo_path"], safe="/"),
@@ -164,6 +169,7 @@ class ShoeUpdate(BaseModel):
     size: Optional[str] = None
     comment: Optional[str] = None
     color: Optional[str] = None
+    boxed: Optional[bool] = None
 
 
 @app.get("/api/health")
@@ -184,6 +190,7 @@ def create_shoe(
     category: str = Form(...),
     size: str = Form(...),
     comment: str = Form(""),
+    boxed: bool = Form(False),
 ):
     category = clean_category(category)
     size = clean_size(size)
@@ -191,8 +198,8 @@ def create_shoe(
     now = now_iso()
     with db() as con:
         cur = con.execute(
-            "INSERT INTO shoes (category, size, comment, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-            (category, size, comment.strip(), now, now),
+            "INSERT INTO shoes (category, size, comment, boxed, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (category, size, comment.strip(), boxed, now, now),
         )
         shoe_id = cur.lastrowid
         rel = rel_photo_path(shoe_id, category, size)
@@ -210,6 +217,7 @@ def update_shoe(shoe_id: int, upd: ShoeUpdate):
         size = clean_size(upd.size) if upd.size is not None else row["size"]
         comment = upd.comment.strip() if upd.comment is not None else row["comment"]
         color = clean_color(upd.color) if upd.color is not None else row["color"]
+        boxed = upd.boxed if upd.boxed is not None else bool(row["boxed"])
 
         rel = row["photo_path"]
         new_rel = rel_photo_path(shoe_id, category, size)
@@ -222,8 +230,8 @@ def update_shoe(shoe_id: int, upd: ShoeUpdate):
             rel = new_rel
 
         con.execute(
-            "UPDATE shoes SET category = ?, size = ?, comment = ?, color = ?, photo_path = ?, updated_at = ? WHERE id = ?",
-            (category, size, comment, color, rel, now_iso(), shoe_id),
+            "UPDATE shoes SET category = ?, size = ?, comment = ?, color = ?, boxed = ?, photo_path = ?, updated_at = ? WHERE id = ?",
+            (category, size, comment, color, boxed, rel, now_iso(), shoe_id),
         )
         row = get_row(con, shoe_id)
     return to_dict(row)

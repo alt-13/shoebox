@@ -34,7 +34,7 @@
     addBtn: $("#addBtn"), camera: $("#camera"), queue: $("#queue"),
     sheet: $("#sheet"), preview: $("#preview"), previewAction: $("#previewAction"),
     catPick: $("#catPick"), sizeInput: $("#sizeInput"), halfBtn: $("#halfBtn"),
-    sizeGrid: $("#sizeGrid"), colorField: $("#colorField"), colorPick: $("#colorPick"), comment: $("#comment"), foot: $("#sheetFoot"), toast: $("#toast"),
+    sizeGrid: $("#sizeGrid"), colorField: $("#colorField"), colorPick: $("#colorPick"), boxed: $("#boxed"), comment: $("#comment"), foot: $("#sheetFoot"), toast: $("#toast"),
   };
 
   // ---------- utils ----------
@@ -241,6 +241,7 @@
     el.sheet.hidden = false;
     document.body.style.overflow = "hidden";
     el.comment.value = draft.comment || "";
+    el.boxed.checked = !!draft.boxed;
     el.colorField.hidden = draft.mode !== "edit"; // new shoes get their color detected on upload
 
     if (draft.mode === "edit") {
@@ -328,6 +329,7 @@
     if (!b || !draft) return;
     const act = b.dataset.act;
     draft.comment = el.comment.value.trim();
+    draft.boxed = el.boxed.checked;
 
     if (act === "cancel") return closeEditor();
 
@@ -345,7 +347,7 @@
 
     if (draft.mode === "edit") {
       try {
-        const upd = await api("PATCH", `/api/shoes/${draft.id}`, { category: draft.category, size: draft.size, comment: draft.comment, color: draft.color || undefined });
+        const upd = await api("PATCH", `/api/shoes/${draft.id}`, { category: draft.category, size: draft.size, comment: draft.comment, boxed: draft.boxed, color: draft.color || undefined });
         state.shoes = state.shoes.map((s) => (s.id === upd.id ? upd : s));
         closeEditor(); render(); toast("Saved");
       } catch (err) { toast("Save failed: " + err.message, true); }
@@ -355,7 +357,7 @@
     // add mode: queue the upload and close immediately
     if (!draft.blob) return toast("Take a photo first", true);
     prefs.cat = draft.category; prefs.size = draft.size; savePrefs();
-    enqueue({ blob: draft.blob, previewUrl: draft.previewUrl, category: draft.category, size: draft.size, comment: draft.comment });
+    enqueue({ blob: draft.blob, previewUrl: draft.previewUrl, category: draft.category, size: draft.size, comment: draft.comment, boxed: draft.boxed });
     closeEditor(true);
     if (act === "next") { retaking = false; el.camera.click(); } // must stay synchronous inside the tap
     else toast("Saved");
@@ -379,6 +381,7 @@
         fd.append("category", item.category);
         fd.append("size", item.size);
         fd.append("comment", item.comment || "");
+        fd.append("boxed", item.boxed ? "true" : "false");
         const shoe = await api("POST", "/api/shoes", fd);
         state.shoes.unshift(shoe);
         if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);

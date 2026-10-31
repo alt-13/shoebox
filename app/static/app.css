@@ -198,6 +198,8 @@ h1 { margin: 0 0 8px; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02
 .color-pick button.on { border: 2.5px solid var(--ink); padding: 0 8.5px; }
 
 .lbl { display: block; font-weight: 700; margin: 16px 0 6px; }
+.check { display: flex; align-items: center; gap: 8px; font-weight: 700; margin: 16px 0 0; }
+.check input { width: 22px; height: 22px; margin: 0; accent-color: var(--ink); }
 textarea {
   width: 100%; padding: 10px 12px; resize: vertical; min-height: 60px;
   border: 1px solid var(--line); border-radius: var(--radius-s); background: var(--surface);
