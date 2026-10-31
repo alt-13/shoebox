@@ -1,0 +1,9 @@
+# For testing locally (docker compose up --build), not needed on Unraid.
+services:
+  shoebox:
+    build: .
+    ports:
+      - "8090:8080"
+    volumes:
+      - ./_local/photos:/photos
+      - ./_local/data:/data

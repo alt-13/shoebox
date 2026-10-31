@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>shoebox</Name>
+  <Repository>ghcr.io/alt-13/shoebox:latest</Repository>
+  <Registry>https://github.com/alt-13/shoebox/pkgs/container/shoebox</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/alt-13/shoebox/issues</Support>
+  <Project>https://github.com/alt-13/shoebox</Project>
+  <Overview>Shoebox: a tiny catalog for the shoes at home (kids/adult, size, photo, note). Optimised for adding shoes quickly with a smartphone. Photos are stored as plain JPEGs in one subfolder per size inside the photo path. Internal use only, no login.</Overview>
+  <Category>Tools: Other:</Category>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/alt-13/shoebox/main/unraid/shoebox.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/alt-13/shoebox/main/unraid/icon.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="Web UI port" Target="8080" Default="8090" Mode="tcp" Description="Port for the web UI. Open http://SERVER-IP:PORT on your phone." Type="Port" Display="always" Required="true" Mask="false">8090</Config>
+  <Config Name="Photo path" Target="/photos" Default="/mnt/user/photos/shoes" Mode="rw" Description="Where the shoe photos are stored. One subfolder per size is created automatically, e.g. /photos/32/00012_kids.jpg" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/photos/shoes</Config>
+  <Config Name="App data" Target="/data" Default="/mnt/user/appdata/shoebox" Mode="rw" Description="SQLite database and thumbnails." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/shoebox</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="" Description="User ID that owns the files (99 = nobody)." Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="" Description="Group ID that owns the files (100 = users)." Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+  <Config Name="UMASK" Target="UMASK" Default="002" Mode="" Description="File permission mask for new files and folders." Type="Variable" Display="advanced" Required="false" Mask="false">002</Config>
+</Container>

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1B2A41">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Shoebox">
+  <title>Shoebox</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="top">
+    <div class="title-row">
+      <h1>Shoebox</h1>
+      <span id="count" class="count"></span>
+    </div>
+    <input id="search" class="search" type="search" placeholder="Search sizes and notes" autocomplete="off" enterkeyhint="search">
+    <div class="filter-row">
+      <div class="seg" id="catFilter" role="group" aria-label="Filter by type">
+        <button type="button" data-cat="all" class="on">All</button>
+        <button type="button" data-cat="kids">Kids</button>
+        <button type="button" data-cat="adult">Adult</button>
+      </div>
+      <button type="button" id="groupToggle" class="ghost" aria-pressed="true">Group by size</button>
+    </div>
+    <div class="size-strip" id="sizeStrip" role="group" aria-label="Filter by size"></div>
+  </header>
+
+  <main id="gallery" class="gallery" aria-live="polite"></main>
+
+  <section id="empty" class="empty" hidden>
+    <p class="empty-title">No shoes yet</p>
+    <p>Tap <strong>Add shoe</strong>, take a photo, pick the size, done.</p>
+  </section>
+
+  <div class="fab-wrap">
+    <button type="button" id="queue" class="queue" hidden></button>
+    <button type="button" id="addBtn" class="fab">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4.5 7.6 6.5H5A2.5 2.5 0 0 0 2.5 9v8.5A2.5 2.5 0 0 0 5 20h14a2.5 2.5 0 0 0 2.5-2.5V9A2.5 2.5 0 0 0 19 6.5h-2.6L15 4.5H9Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      Add shoe
+    </button>
+  </div>
+
+  <!-- Opens the phone's native camera. Works over plain HTTP (unlike getUserMedia). -->
+  <input id="camera" type="file" accept="image/*" capture="environment" hidden>
+
+  <div id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-body">
+      <div class="preview-wrap">
+        <img id="preview" class="preview" alt="Shoe photo">
+        <button type="button" id="previewAction" class="preview-action"></button>
+      </div>
+
+      <h2 id="sheetTitle" class="visually-hidden">Shoe details</h2>
+
+      <div class="seg big" id="catPick" role="group" aria-label="Type">
+        <button type="button" data-cat="kids">Kids</button>
+        <button type="button" data-cat="adult">Adult</button>
+      </div>
+
+      <div class="size-head">
+        <label for="sizeInput">Size</label>
+        <input id="sizeInput" class="size-input" inputmode="decimal" autocomplete="off" placeholder="–">
+        <button type="button" id="halfBtn" class="ghost half" aria-pressed="false">+ ½</button>
+      </div>
+      <div id="sizeGrid" class="size-grid" role="group" aria-label="Pick a size"></div>
+
+      <label for="comment" class="lbl">Note <span class="muted">(optional)</span></label>
+      <textarea id="comment" rows="2" placeholder="e.g. winter boots, worn sole, from grandma"></textarea>
+    </div>
+
+    <div class="sheet-foot" id="sheetFoot"></div>
+  </div>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
