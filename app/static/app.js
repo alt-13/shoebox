@@ -21,7 +21,7 @@
   const savePrefs = () => { try { localStorage.setItem("shoebox", JSON.stringify(prefs)); } catch {} };
 
   // ---------- state ----------
-  const state = { shoes: [], cat: "all", size: null, color: null, q: "", grouped: prefs.grouped };
+  const state = { shoes: [], cat: "all", size: null, color: null, boxed: false, q: "", grouped: prefs.grouped };
   let draft = null;          // shoe being added/edited
   let retaking = false;
   const queue = [];          // pending uploads
@@ -30,7 +30,7 @@
 
   const el = {
     gallery: $("#gallery"), empty: $("#empty"), count: $("#count"), search: $("#search"),
-    catFilter: $("#catFilter"), groupToggle: $("#groupToggle"), sizeStrip: $("#sizeStrip"), colorStrip: $("#colorStrip"),
+    catFilter: $("#catFilter"), groupToggle: $("#groupToggle"), boxedToggle: $("#boxedToggle"), sizeStrip: $("#sizeStrip"), colorStrip: $("#colorStrip"),
     addBtn: $("#addBtn"), camera: $("#camera"), queue: $("#queue"),
     sheet: $("#sheet"), preview: $("#preview"), previewAction: $("#previewAction"),
     catPick: $("#catPick"), sizeInput: $("#sizeInput"), halfBtn: $("#halfBtn"),
@@ -97,6 +97,7 @@
       (state.cat === "all" || s.category === state.cat) &&
       (state.size === null || s.size === state.size) &&
       (state.color === null || s.color === state.color) &&
+      (!state.boxed || s.boxed) &&
       (!q || s.size.toLowerCase().includes(q) || s.color.includes(q) || (s.comment || "").toLowerCase().includes(q) || catLabel(s.category).toLowerCase().includes(q))
     );
   }
@@ -211,6 +212,12 @@
     prefs.grouped = state.grouped; savePrefs(); syncGroupBtn(); render();
   });
   syncGroupBtn();
+  el.boxedToggle.addEventListener("click", () => {
+    state.boxed = !state.boxed;
+    el.boxedToggle.setAttribute("aria-pressed", String(state.boxed));
+    el.boxedToggle.textContent = state.boxed ? "✓ Boxed" : "Boxed";
+    render();
+  });
 
   // ---------- camera ----------
   el.addBtn.addEventListener("click", () => { retaking = false; el.camera.click(); });
