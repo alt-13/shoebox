@@ -22,7 +22,7 @@
       <h1>Shoebox</h1>
       <span id="count" class="count"></span>
     </div>
-    <input id="search" class="search" type="search" placeholder="Search sizes and notes" autocomplete="off" enterkeyhint="search">
+    <input id="search" class="search" type="search" placeholder="Search sizes, colors and notes" autocomplete="off" enterkeyhint="search">
     <div class="filter-row">
       <div class="seg" id="catFilter" role="group" aria-label="Filter by type">
         <button type="button" data-cat="all" class="on">All</button>
@@ -32,6 +32,7 @@
       <button type="button" id="groupToggle" class="ghost" aria-pressed="true">Group by size</button>
     </div>
     <div class="size-strip" id="sizeStrip" role="group" aria-label="Filter by size"></div>
+    <div class="size-strip" id="colorStrip" role="group" aria-label="Filter by color"></div>
   </header>
 
   <main id="gallery" class="gallery" aria-live="polite"></main>
@@ -72,6 +73,11 @@
         <button type="button" id="halfBtn" class="ghost half" aria-pressed="false">+ ½</button>
       </div>
       <div id="sizeGrid" class="size-grid" role="group" aria-label="Pick a size"></div>
+
+      <div id="colorField">
+        <p class="lbl" id="colorLbl">Color</p>
+        <div id="colorPick" class="color-pick" role="group" aria-labelledby="colorLbl"></div>
+      </div>
 
       <label for="comment" class="lbl">Note <span class="muted">(optional)</span></label>
       <textarea id="comment" rows="2" placeholder="e.g. winter boots, worn sole, from grandma"></textarea>

@@ -19,6 +19,8 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps
 from pydantic import BaseModel
 
+from .color import COLORS, detect_color
+
 PHOTO_DIR = Path(os.environ.get("PHOTO_DIR", "/photos")).resolve()
 DATA_DIR = Path(os.environ.get("DATA_DIR", "/data")).resolve()
 THUMB_DIR = DATA_DIR / "thumbs"
@@ -50,10 +52,20 @@ with db() as con:
             size        TEXT NOT NULL,
             comment     TEXT NOT NULL DEFAULT '',
             photo_path  TEXT NOT NULL DEFAULT '',
+            color       TEXT NOT NULL DEFAULT '',
             created_at  TEXT NOT NULL,
             updated_at  TEXT NOT NULL
         )"""
     )
+    if "color" not in {r["name"] for r in con.execute("PRAGMA table_info(shoes)")}:
+        con.execute("ALTER TABLE shoes ADD COLUMN color TEXT NOT NULL DEFAULT ''")
+    # name the color of shoes added before color detection existed
+    for r in con.execute("SELECT id FROM shoes WHERE color = ''").fetchall():
+        try:
+            with Image.open(THUMB_DIR / f"{r['id']}.jpg") as im:
+                con.execute("UPDATE shoes SET color = ? WHERE id = ?", (detect_color(im), r["id"]))
+        except OSError:
+            pass  # missing or unreadable thumbnail, leave it uncolored
 
 app = FastAPI(title="Shoebox", docs_url="/api/docs", redoc_url=None)
 
@@ -68,6 +80,13 @@ def clean_category(raw: Optional[str]) -> str:
     c = (raw or "").strip().lower()
     if c not in CATEGORIES:
         raise HTTPException(400, "Category must be 'kids' or 'adult'")
+    return c
+
+
+def clean_color(raw: Optional[str]) -> str:
+    c = (raw or "").strip().lower()
+    if c not in COLORS:
+        raise HTTPException(400, "Color must be one of: " + ", ".join(COLORS))
     return c
 
 
@@ -93,7 +112,8 @@ def remove_empty_dir(p: Path) -> None:
         pass
 
 
-def save_image(data: bytes, dest: Path, thumb: Path) -> None:
+def save_image(data: bytes, dest: Path, thumb: Path) -> str:
+    """Store photo and thumbnail, return the detected color."""
     try:
         img = Image.open(io.BytesIO(data))
         fmt = img.format
@@ -113,6 +133,7 @@ def save_image(data: bytes, dest: Path, thumb: Path) -> None:
     t = img.copy()
     t.thumbnail((THUMB_SIZE, THUMB_SIZE))
     t.save(thumb, "JPEG", quality=80)
+    return detect_color(t)
 
 
 def to_dict(r: sqlite3.Row) -> dict:
@@ -121,6 +142,7 @@ def to_dict(r: sqlite3.Row) -> dict:
         "category": r["category"],
         "size": r["size"],
         "comment": r["comment"],
+        "color": r["color"],
         "created_at": r["created_at"],
         "updated_at": r["updated_at"],
         "photo_url": "/photos/" + quote(r["photo_path"], safe="/"),
@@ -141,6 +163,7 @@ class ShoeUpdate(BaseModel):
     category: Optional[str] = None
     size: Optional[str] = None
     comment: Optional[str] = None
+    color: Optional[str] = None
 
 
 @app.get("/api/health")
@@ -173,8 +196,8 @@ def create_shoe(
         )
         shoe_id = cur.lastrowid
         rel = rel_photo_path(shoe_id, category, size)
-        save_image(data, PHOTO_DIR / rel, THUMB_DIR / f"{shoe_id}.jpg")  # raises -> rollback
-        con.execute("UPDATE shoes SET photo_path = ? WHERE id = ?", (rel, shoe_id))
+        color = save_image(data, PHOTO_DIR / rel, THUMB_DIR / f"{shoe_id}.jpg")  # raises -> rollback
+        con.execute("UPDATE shoes SET photo_path = ?, color = ? WHERE id = ?", (rel, color, shoe_id))
         row = get_row(con, shoe_id)
     return to_dict(row)
 
@@ -186,6 +209,7 @@ def update_shoe(shoe_id: int, upd: ShoeUpdate):
         category = clean_category(upd.category) if upd.category is not None else row["category"]
         size = clean_size(upd.size) if upd.size is not None else row["size"]
         comment = upd.comment.strip() if upd.comment is not None else row["comment"]
+        color = clean_color(upd.color) if upd.color is not None else row["color"]
 
         rel = row["photo_path"]
         new_rel = rel_photo_path(shoe_id, category, size)
@@ -198,8 +222,8 @@ def update_shoe(shoe_id: int, upd: ShoeUpdate):
             rel = new_rel
 
         con.execute(
-            "UPDATE shoes SET category = ?, size = ?, comment = ?, photo_path = ?, updated_at = ? WHERE id = ?",
-            (category, size, comment, rel, now_iso(), shoe_id),
+            "UPDATE shoes SET category = ?, size = ?, comment = ?, color = ?, photo_path = ?, updated_at = ? WHERE id = ?",
+            (category, size, comment, color, rel, now_iso(), shoe_id),
         )
         row = get_row(con, shoe_id)
     return to_dict(row)

@@ -1,6 +1,6 @@
 # Shoebox
 
-A tiny self-hosted catalog for the shoes at home: type (kids/adult), EU size, photo and an optional note.
+A tiny self-hosted catalog for the shoes at home: type (kids/adult), EU size, photo, color and an optional note.
 Built for adding shoes fast with a smartphone, deployed as a single Docker container on Unraid.
 
 - **Web UI**: vanilla HTML/CSS/JS, no build step
@@ -93,6 +93,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 8090
 
 ## Notes
 
+- The color is detected automatically from the photo (the main color in the middle of the picture, ignoring the floor).
+  It works best with the shoe in the center on a plain floor; tap a shoe to correct it. Existing shoes get a color on the next start.
 - Changing a shoe's size or type in the app moves its photo to the matching folder; empty size folders are removed.
 - Deleting a shoe deletes its photo file too.
 - API docs: `http://<server>:8090/api/docs`

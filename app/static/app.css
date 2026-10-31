@@ -80,6 +80,10 @@ h1 { margin: 0 0 8px; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02
 .size-strip button small { color: var(--ink-soft); font-weight: 400; margin-left: 4px; }
 .size-strip button.on { background: var(--ink); color: var(--canvas); border-color: var(--ink); }
 .size-strip button.on small { color: inherit; opacity: .7; }
+.dot {
+  display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+  margin-right: 6px; vertical-align: -2px; box-shadow: inset 0 0 0 1px rgba(127, 127, 127, .6);
+}
 
 /* ---------- gallery ---------- */
 .gallery { padding: 6px 10px; }
@@ -185,6 +189,13 @@ h1 { margin: 0 0 8px; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02
   font-variant-numeric: tabular-nums;
 }
 .size-grid button.on { background: var(--ink); color: var(--canvas); border-color: var(--ink); }
+
+.color-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.color-pick button {
+  height: 44px; border: 1px solid var(--line); background: var(--surface);
+  border-radius: var(--radius-s); font-weight: 600; text-align: left; padding: 0 10px;
+}
+.color-pick button.on { border: 2.5px solid var(--ink); padding: 0 8.5px; }
 
 .lbl { display: block; font-weight: 700; margin: 16px 0 6px; }
 textarea {

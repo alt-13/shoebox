@@ -4,6 +4,12 @@
   const $ = (s) => document.querySelector(s);
   const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => String(a + i));
   const SIZES = { kids: range(16, 40), adult: range(34, 50) };
+  // same names and order as COLORS in app/color.py
+  const COLORS = {
+    black: "#1c1c1c", white: "#ffffff", grey: "#9aa0a6", beige: "#dcc7a1", brown: "#7b4a26", red: "#d0312d",
+    pink: "#f29cc0", orange: "#f28c28", yellow: "#f5d03b", green: "#3c9a4c", blue: "#2f6fd1", purple: "#7e57c2",
+  };
+  const COLOR_NAMES = Object.keys(COLORS);
   const MAX_EDGE = 2048;     // photos are downscaled in the browser before upload
   const JPEG_QUALITY = 0.85;
 
@@ -15,7 +21,7 @@
   const savePrefs = () => { try { localStorage.setItem("shoebox", JSON.stringify(prefs)); } catch {} };
 
   // ---------- state ----------
-  const state = { shoes: [], cat: "all", size: null, q: "", grouped: prefs.grouped };
+  const state = { shoes: [], cat: "all", size: null, color: null, q: "", grouped: prefs.grouped };
   let draft = null;          // shoe being added/edited
   let retaking = false;
   const queue = [];          // pending uploads
@@ -24,17 +30,24 @@
 
   const el = {
     gallery: $("#gallery"), empty: $("#empty"), count: $("#count"), search: $("#search"),
-    catFilter: $("#catFilter"), groupToggle: $("#groupToggle"), sizeStrip: $("#sizeStrip"),
+    catFilter: $("#catFilter"), groupToggle: $("#groupToggle"), sizeStrip: $("#sizeStrip"), colorStrip: $("#colorStrip"),
     addBtn: $("#addBtn"), camera: $("#camera"), queue: $("#queue"),
     sheet: $("#sheet"), preview: $("#preview"), previewAction: $("#previewAction"),
     catPick: $("#catPick"), sizeInput: $("#sizeInput"), halfBtn: $("#halfBtn"),
-    sizeGrid: $("#sizeGrid"), comment: $("#comment"), foot: $("#sheetFoot"), toast: $("#toast"),
+    sizeGrid: $("#sizeGrid"), colorField: $("#colorField"), colorPick: $("#colorPick"), comment: $("#comment"), foot: $("#sheetFoot"), toast: $("#toast"),
   };
 
   // ---------- utils ----------
   const sizeNum = (s) => { const n = parseFloat(String(s).replace(",", ".")); return isNaN(n) ? Infinity : n; };
   const bySize = (a, b) => sizeNum(a) - sizeNum(b) || String(a).localeCompare(String(b));
   const catLabel = (c) => (c === "kids" ? "Kids" : "Adult");
+  const colorLabel = (c) => c.charAt(0).toUpperCase() + c.slice(1);
+  const dot = (c) => {
+    const d = document.createElement("span");
+    d.className = "dot";
+    d.style.background = COLORS[c];
+    return d;
+  };
 
   let toastTimer;
   function toast(msg, err = false) {
@@ -83,7 +96,8 @@
     return state.shoes.filter((s) =>
       (state.cat === "all" || s.category === state.cat) &&
       (state.size === null || s.size === state.size) &&
-      (!q || s.size.toLowerCase().includes(q) || (s.comment || "").toLowerCase().includes(q) || catLabel(s.category).toLowerCase().includes(q))
+      (state.color === null || s.color === state.color) &&
+      (!q || s.size.toLowerCase().includes(q) || s.color.includes(q) || (s.comment || "").toLowerCase().includes(q) || catLabel(s.category).toLowerCase().includes(q))
     );
   }
 
@@ -91,7 +105,7 @@
     const b = document.createElement("button");
     b.type = "button";
     b.className = "tile";
-    b.setAttribute("aria-label", `${catLabel(s.category)} size ${s.size}${s.comment ? ", " + s.comment : ""}`);
+    b.setAttribute("aria-label", `${catLabel(s.category)} size ${s.size}${s.color ? ", " + s.color : ""}${s.comment ? ", " + s.comment : ""}`);
     b.innerHTML =
       `<img loading="lazy" alt="">` +
       (state.cat === "all" ? `<span class="tag ${s.category}">${catLabel(s.category)}</span>` : "") +
@@ -103,30 +117,33 @@
     return b;
   }
 
-  function renderSizeStrip() {
+  // filter strip for one shoe field ("size" or "color"), with counts for the current type filter
+  function renderStrip(strip, key, allLabel, order, label) {
     const pool = state.shoes.filter((s) => state.cat === "all" || s.category === state.cat);
     const counts = {};
-    pool.forEach((s) => (counts[s.size] = (counts[s.size] || 0) + 1));
-    const sizes = Object.keys(counts).sort(bySize);
-    if (state.size !== null && !counts[state.size]) state.size = null;
+    pool.forEach((s) => { if (s[key]) counts[s[key]] = (counts[s[key]] || 0) + 1; });
+    const values = Object.keys(counts).sort(order);
+    if (state[key] !== null && !counts[state[key]]) state[key] = null;
 
-    el.sizeStrip.replaceChildren();
-    const mk = (label, value, n) => {
+    strip.replaceChildren();
+    const mk = (text, value, n) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = state.size === value ? "on" : "";
-      b.textContent = label;
+      b.className = state[key] === value ? "on" : "";
+      b.textContent = text;
+      if (key === "color" && value) b.prepend(dot(value));
       if (n !== undefined) { const sm = document.createElement("small"); sm.textContent = n; b.append(sm); }
-      b.addEventListener("click", () => { state.size = state.size === value ? null : value; render(); });
+      b.addEventListener("click", () => { state[key] = state[key] === value ? null : value; render(); });
       return b;
     };
-    el.sizeStrip.append(mk("All sizes", null));
-    sizes.forEach((sz) => el.sizeStrip.append(mk(sz, sz, counts[sz])));
-    el.sizeStrip.hidden = sizes.length === 0;
+    strip.append(mk(allLabel, null));
+    values.forEach((v) => strip.append(mk(label(v), v, counts[v])));
+    strip.hidden = values.length === 0;
   }
 
   function render() {
-    renderSizeStrip();
+    renderStrip(el.sizeStrip, "size", "All sizes", bySize, (v) => v);
+    renderStrip(el.colorStrip, "color", "All colors", (a, b) => COLOR_NAMES.indexOf(a) - COLOR_NAMES.indexOf(b), colorLabel);
     const list = visibleShoes();
     el.count.textContent = state.shoes.length ? `${list.length} of ${state.shoes.length}` : "";
     el.empty.hidden = state.shoes.length > 0;
@@ -224,6 +241,7 @@
     el.sheet.hidden = false;
     document.body.style.overflow = "hidden";
     el.comment.value = draft.comment || "";
+    el.colorField.hidden = draft.mode !== "edit"; // new shoes get their color detected on upload
 
     if (draft.mode === "edit") {
       el.preview.src = draft.photo_url;
@@ -265,6 +283,17 @@
       if (n === whole) b.classList.add("on");
       b.addEventListener("click", () => { draft.size = isHalf ? n + ".5" : n; renderPicker(); });
       el.sizeGrid.append(b);
+    });
+    el.colorPick.replaceChildren();
+    COLOR_NAMES.forEach((c) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = colorLabel(c);
+      b.prepend(dot(c));
+      b.classList.toggle("on", c === draft.color);
+      b.setAttribute("aria-pressed", String(c === draft.color));
+      b.addEventListener("click", () => { draft.color = c; renderPicker(); });
+      el.colorPick.append(b);
     });
   }
 
@@ -316,7 +345,7 @@
 
     if (draft.mode === "edit") {
       try {
-        const upd = await api("PATCH", `/api/shoes/${draft.id}`, { category: draft.category, size: draft.size, comment: draft.comment });
+        const upd = await api("PATCH", `/api/shoes/${draft.id}`, { category: draft.category, size: draft.size, comment: draft.comment, color: draft.color || undefined });
         state.shoes = state.shoes.map((s) => (s.id === upd.id ? upd : s));
         closeEditor(); render(); toast("Saved");
       } catch (err) { toast("Save failed: " + err.message, true); }
