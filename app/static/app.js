@@ -24,6 +24,7 @@
   const state = { shoes: [], cat: "all", size: null, color: null, boxed: false, q: "", grouped: prefs.grouped };
   let draft = null;          // shoe being added/edited
   let retaking = false;
+  let sheetInHistory = false; // the open sheet owns a history entry, so Back closes it instead of leaving the app
   const queue = [];          // pending uploads
   const failed = [];
   let uploading = false;
@@ -245,6 +246,7 @@
   // ---------- editor sheet ----------
   function openEditor(d) {
     draft = { ...d };
+    if (!sheetInHistory) { history.pushState(null, ""); sheetInHistory = true; }
     el.sheet.hidden = false;
     document.body.style.overflow = "hidden";
     el.comment.value = draft.comment || "";
@@ -275,7 +277,14 @@
     draft = null;
     el.sheet.hidden = true;
     document.body.style.overflow = "";
+    if (sheetInHistory) { sheetInHistory = false; history.back(); }
   }
+
+  window.addEventListener("popstate", () => {
+    if (!sheetInHistory) return;
+    sheetInHistory = false;
+    closeEditor();
+  });
 
   function renderPicker() {
     el.catPick.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.cat === draft.category));
